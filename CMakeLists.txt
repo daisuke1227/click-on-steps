@@ -28,7 +28,7 @@ set(MOD_SOURCES
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
     list(APPEND MOD_SOURCES src/macos.mm)
 elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "iOS")
-    list(APPEND MOD_SOURCES src/macos.mm)
+    list(APPEND MOD_SOURCES src/ios.mm)
     set_source_files_properties(src/macos.mm PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
 elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Android")
     list(APPEND MOD_SOURCES src/android.cpp)
