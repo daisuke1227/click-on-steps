@@ -5,7 +5,7 @@
 #define DEBUG_STEPS false
 
 #if DEBUG_STEPS
-// this one's me being lazy
+// This helper is for debugging pointer offsets.
 template <typename T>
 inline T* ptr_to_offset(void* base, unsigned int offset) {
     return reinterpret_cast<T*>(reinterpret_cast<uintptr_t>(base) + offset);
@@ -18,16 +18,18 @@ inline T get_from_offset(void* base, unsigned int offset) {
 #endif
 
 // Get timestamp with compatibility for custom keybinds.
-// On macOS we use keyboard event info; otherwise return 0.
+// On macOS we use keyboard event info; for non-macOS, return 0.
 std::uint64_t getTimestampCompat() {
 #ifdef GEODE_IS_MACOS
     auto event = ExtendedCCKeyboardDispatcher::getCurrentEventInfo();
-    if (event) {
-        auto extendedInfo = static_cast<ExtendedCCEvent*>(event);
-        return extendedInfo->getTimestamp();
+    if (!event) {
+        return 0;
     }
-#endif
+    auto extendedInfo = static_cast<ExtendedCCEvent*>(event);
+    return extendedInfo->getTimestamp();
+#else
     return 0;
+#endif
 }
 
 #ifdef GEODE_IS_WINDOWS
@@ -35,7 +37,7 @@ void CustomGJBaseGameLayer::queueButton_custom(int btnType, bool push, bool seco
 #else
 void CustomGJBaseGameLayer::queueButton(int btnType, bool push, bool secondPlayer) {
 #endif
-    // Workaround for passing arguments etc.
+    // Workaround for passing arguments to methods.
     auto& fields = this->m_fields;
 
 #ifdef GEODE_IS_ANDROID
@@ -55,11 +57,10 @@ void CustomGJBaseGameLayer::queueButton(int btnType, bool push, bool secondPlaye
     auto timeRelativeBegin = fields->m_timeBeginMs;
     auto currentTime = inputTimestamp - timeRelativeBegin;
     if (inputTimestamp < timeRelativeBegin || !inputTimestamp || !timeRelativeBegin) {
-        // If time is not yet initialized, use zero.
+        // When time isn't initialized yet, use 0.
         currentTime = 0;
     }
 
-    // Calculate the step, maintaining compatibility with the physics bypass.
     auto inputOffset = fields->m_inputOffset;
     if (fields->m_inputOffsetRand != 0) {
         auto offsetMax = fields->m_inputOffsetRand;
@@ -89,13 +90,16 @@ void CustomGJBaseGameLayer::queueButton(int btnType, bool push, bool secondPlaye
 
 void CustomGJBaseGameLayer::resetLevelVariables() {
     GJBaseGameLayer::resetLevelVariables();
+
     auto& fields = m_fields;
     fields->m_timeBeginMs = 0;
     fields->m_timeOffset = 0.0;
     fields->m_timedCommands = {};
     fields->m_disableInputCutoff = geode::Mod::get()->getSettingValue<bool>("late-input-cutoff");
-    fields->m_inputOffset = static_cast<std::int32_t>(geode::Mod::get()->getSettingValue<std::int64_t>("input-offset"));
-    fields->m_inputOffsetRand = static_cast<std::int32_t>(geode::Mod::get()->getSettingValue<std::int64_t>("input-offset-rand"));
+    fields->m_inputOffset = static_cast<std::int32_t>(
+        geode::Mod::get()->getSettingValue<std::int64_t>("input-offset"));
+    fields->m_inputOffsetRand = static_cast<std::int32_t>(
+        geode::Mod::get()->getSettingValue<std::int64_t>("input-offset-rand"));
 }
 
 void CustomGJBaseGameLayer::processTimedInputs() {
@@ -172,6 +176,7 @@ void CustomGJBaseGameLayer::update(float dt) {
     auto& fields = m_fields;
     fields->m_timeBeginMs = platform_get_time();
     fields->m_timeOffset = 0.0;
+
     fields->m_inFrame = true;
 
     GJBaseGameLayer::update(dt);
