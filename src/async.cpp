@@ -4,20 +4,7 @@
 #define DEBUG_PROCESSING false
 
 void AsyncUILayer::handleKeypress(cocos2d::enumKeyCodes key, bool down) {
-#ifdef GEODE_IS_MACOS
-    auto event = ExtendedCCKeyboardDispatcher::getCurrentEventInfo();
-    if (event) {
-        auto extendedInfo = static_cast<ExtendedCCEvent*>(event);
-        m_fields->m_lastTimestamp = extendedInfo->getTimestamp();
-
-        UILayer::handleKeypress(key, down);
-        static_cast<CustomGJBaseGameLayer*>(this->m_gameLayer)->fixUntimedInputs();
-
-        m_fields->m_lastTimestamp = 0ull;
-        return;
-    }
-#endif
-    // Fallback for platforms that don't have keyboard events (like iOS)
+    // Remove keyboard-specific code and directly call the base implementation.
     UILayer::handleKeypress(key, down);
 }
 
@@ -79,7 +66,6 @@ void AsyncUILayer::ccTouchEnded(cocos2d::CCTouch* touch, cocos2d::CCEvent* event
 
 #ifndef GEODE_IS_WINDOWS
 void AsyncUILayer::ccTouchCancelled(cocos2d::CCTouch* touch, cocos2d::CCEvent* event) {
-    // On platforms like Android and iOS this event typically maps to a touch ending.
     if (!event) {
         return this->ccTouchEnded(touch, event);
     }
